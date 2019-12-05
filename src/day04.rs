@@ -119,7 +119,7 @@ fn at_least_one_single_double(mut i: impl Iterator<Item = u8>) -> bool {
 
 #[test]
 fn single_doubles() {
-    assert!(at_least_one_single_double(make_iter(&get_digits(112233))));
-    assert!(!at_least_one_single_double(make_iter(&get_digits(123444))));
-    assert!(at_least_one_single_double(make_iter(&get_digits(111122))));
+    assert!(at_least_one_single_double(make_iter(&get_digits(112_233))));
+    assert!(!at_least_one_single_double(make_iter(&get_digits(123_444))));
+    assert!(at_least_one_single_double(make_iter(&get_digits(111_122))));
 }

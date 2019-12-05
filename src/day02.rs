@@ -1,46 +1,8 @@
+use crate::intcode::*;
 use aoc_runner_derive::{aoc, aoc_generator};
 
-pub struct Instruction {
-    opcode: InstructionKind,
-    op1: usize,
-    op2: usize,
-    dst: usize,
-}
-
-pub enum InstructionKind {
-    Add,
-    Mul,
-    Halt,
-}
-
-impl Instruction {
-    pub fn new(opcode: InstructionKind, op1: usize, op2: usize, dst: usize) -> Self {
-        Self {
-            opcode,
-            op1,
-            op2,
-            dst,
-        }
-    }
-
-    pub fn halt() -> Self {
-        Self::new(InstructionKind::Halt, 0, 0, 0)
-    }
-
-    fn decode(bytes: &[usize]) -> Option<Instruction> {
-        use InstructionKind::*;
-
-        match bytes[0] {
-            1 => Some(Instruction::new(Add, bytes[1], bytes[2], bytes[3])),
-            2 => Some(Instruction::new(Mul, bytes[1], bytes[2], bytes[3])),
-            99 => Some(Instruction::halt()),
-            _ => None,
-        }
-    }
-}
-
 #[aoc_generator(day2)]
-fn parse_input(input: &str) -> Vec<usize> {
+fn parse_input(input: &str) -> Vec<isize> {
     input
         .split(',')
         .map(str::parse)
@@ -49,7 +11,7 @@ fn parse_input(input: &str) -> Vec<usize> {
 }
 
 #[aoc(day2, part1)]
-fn part1(bytes: &[usize]) -> usize {
+fn part1(bytes: &[isize]) -> isize {
     let mut bytes = bytes.to_vec();
 
     // before running the program, replace position 1 with the value 12 and
@@ -57,26 +19,18 @@ fn part1(bytes: &[usize]) -> usize {
     bytes[1] = 12;
     bytes[2] = 2;
 
-    let mut start = 0;
+    let mut machine = IntcodeMachine::new(&mut bytes, None.into_iter(), ());
+    machine.run();
 
-    loop {
-        let inst = Instruction::decode(&bytes[start..]).unwrap();
-        start += 4;
-
-        match inst.opcode {
-            InstructionKind::Add => bytes[inst.dst] = bytes[inst.op1] + bytes[inst.op2],
-            InstructionKind::Mul => bytes[inst.dst] = bytes[inst.op1] * bytes[inst.op2],
-            InstructionKind::Halt => break,
-        }
-    }
-
-    bytes[0]
+    machine.data()[0]
 }
 
 #[aoc(day2, part2)]
-fn part2(bytes: &[usize]) -> String {
+fn part2(bytes: &[isize]) -> String {
     let mut mbytes = Vec::with_capacity(bytes.len());
-    let desired = 19690720;
+    let desired = 19_690_720;
+
+    let mut iter = None.into_iter();
 
     for noun in 0..=99 {
         for verb in 0..=99 {
@@ -86,18 +40,8 @@ fn part2(bytes: &[usize]) -> String {
             mbytes[1] = noun;
             mbytes[2] = verb;
 
-            let mut start = 0;
-
-            loop {
-                let inst = Instruction::decode(&mbytes[start..]).unwrap();
-                start += 4;
-
-                match inst.opcode {
-                    InstructionKind::Add => mbytes[inst.dst] = mbytes[inst.op1] + mbytes[inst.op2],
-                    InstructionKind::Mul => mbytes[inst.dst] = mbytes[inst.op1] * mbytes[inst.op2],
-                    InstructionKind::Halt => break,
-                }
-            }
+            let mut machine = IntcodeMachine::new(&mut mbytes, &mut iter, ());
+            machine.run();
 
             if mbytes[0] == desired {
                 return format!(
