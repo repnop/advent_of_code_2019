@@ -27,6 +27,8 @@ impl<R: Iterator<Item = isize>, W: Sink<isize>> IntcodeMachine<R, W> {
     pub fn run(&mut self) {
         while self.running {
             let inst = Instructions::decode(&self.data[self.ip..]);
+            // #[cfg(debug_assertions)]
+            // eprintln!("{:?}", inst);
             self.ip += inst.size();
             inst.execute(self);
         }
@@ -527,17 +529,20 @@ impl Instructions {
 
         let opcode = Opcode::from(ints[0]);
 
+        let bytes = &ints[1..];
+
         match opcode.opcode {
-            ADD_OP => Add::decode(opcode, &ints[1..]),
-            MUL_OP => Mul::decode(opcode, &ints[1..]),
-            INP_OP => Input::decode(opcode, &ints[1..]),
-            OUT_OP => Output::decode(opcode, &ints[1..]),
-            JIT_OP => JumpIfTrue::decode(opcode, &ints[1..]),
-            JIF_OP => JumpIfFalse::decode(opcode, &ints[1..]),
-            LST_OP => LessThan::decode(opcode, &ints[1..]),
-            EQU_OP => EqualTo::decode(opcode, &ints[1..]),
-            MRB_OP => ModRelBase::decode(opcode, &ints[1..]),
+            ADD_OP => Add::decode(opcode, bytes),
+            MUL_OP => Mul::decode(opcode, bytes),
+            INP_OP => Input::decode(opcode, bytes),
+            OUT_OP => Output::decode(opcode, bytes),
+            JIT_OP => JumpIfTrue::decode(opcode, bytes),
+            JIF_OP => JumpIfFalse::decode(opcode, bytes),
+            LST_OP => LessThan::decode(opcode, bytes),
+            EQU_OP => EqualTo::decode(opcode, bytes),
+            MRB_OP => ModRelBase::decode(opcode, bytes),
             HALT_OP => Halt::new().into(),
+            #[cold]
             n => panic!("Invalid opcode: {}, {}", n, ints[0]),
         }
     }

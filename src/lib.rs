@@ -14,6 +14,6 @@ mod day07;
 mod day08;
 mod day09;
 
-mod intcode;
+pub mod intcode;
 
 aoc_runner_derive::aoc_lib! { year = 2019 }
