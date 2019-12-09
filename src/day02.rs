@@ -19,7 +19,7 @@ fn part1(bytes: &[isize]) -> isize {
     bytes[1] = 12;
     bytes[2] = 2;
 
-    let mut machine = IntcodeMachine::new(&mut bytes, None.into_iter(), ());
+    let mut machine = IntcodeMachine::new(&bytes, None.into_iter(), ());
     machine.run();
 
     machine.data()[0]
@@ -40,7 +40,7 @@ fn part2(bytes: &[isize]) -> String {
             mbytes[1] = noun;
             mbytes[2] = verb;
 
-            let mut machine = IntcodeMachine::new(&mut mbytes, &mut iter, ());
+            let mut machine = IntcodeMachine::new(&mbytes, &mut iter, ());
             machine.run();
 
             if mbytes[0] == desired {

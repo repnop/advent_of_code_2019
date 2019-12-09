@@ -8,15 +8,21 @@ use rayon::prelude::*;
 use std::iter::once;
 
 fn parse_input(input: &str) -> Vec<isize> {
-    input.split(',').map(str::parse).collect::<Result<_, _>>().unwrap()
+    input
+        .split(',')
+        .map(str::parse)
+        .collect::<Result<_, _>>()
+        .unwrap()
 }
 
 #[aoc(day7, part1)]
 fn part1_overengineered(input: &str) -> isize {
     let code = parse_input(input);
 
-    let inputs: Vec<(isize, isize, isize, isize, isize)> =
-        (0..=4).permutations(5).map(|v| (v[0], v[1], v[2], v[3], v[4])).collect();
+    let inputs: Vec<(isize, isize, isize, isize, isize)> = (0..=4)
+        .permutations(5)
+        .map(|v| (v[0], v[1], v[2], v[3], v[4]))
+        .collect();
 
     inputs
         .into_par_iter()
@@ -28,17 +34,11 @@ fn part1_overengineered(input: &str) -> isize {
             let (d_out, e_in) = bounded(1);
             let mut e_out = 0isize;
 
-            let mut a_code = code.clone();
-            let mut b_code = code.clone();
-            let mut c_code = code.clone();
-            let mut d_code = code.clone();
-            let mut e_code = code.clone();
-
-            let mut a = IntcodeMachine::new(&mut a_code, once(a).chain(once(0)), a_out);
-            let mut b = IntcodeMachine::new(&mut b_code, once(b).chain(b_in), b_out);
-            let mut c = IntcodeMachine::new(&mut c_code, once(c).chain(c_in), c_out);
-            let mut d = IntcodeMachine::new(&mut d_code, once(d).chain(d_in), d_out);
-            let mut e = IntcodeMachine::new(&mut e_code, once(e).chain(e_in), &mut e_out);
+            let mut a = IntcodeMachine::new(&code, once(a).chain(once(0)), a_out);
+            let mut b = IntcodeMachine::new(&code, once(b).chain(b_in), b_out);
+            let mut c = IntcodeMachine::new(&code, once(c).chain(c_in), c_out);
+            let mut d = IntcodeMachine::new(&code, once(d).chain(d_in), d_out);
+            let mut e = IntcodeMachine::new(&code, once(e).chain(e_in), &mut e_out);
 
             let mut pool = scoped_threadpool::Pool::new(5);
 
@@ -60,8 +60,10 @@ fn part1_overengineered(input: &str) -> isize {
 fn part2_overengineered(input: &str) -> isize {
     let code = parse_input(input);
 
-    let inputs: Vec<(isize, isize, isize, isize, isize)> =
-        (5..=9).permutations(5).map(|v| (v[0], v[1], v[2], v[3], v[4])).collect();
+    let inputs: Vec<(isize, isize, isize, isize, isize)> = (5..=9)
+        .permutations(5)
+        .map(|v| (v[0], v[1], v[2], v[3], v[4]))
+        .collect();
 
     inputs
         .into_par_iter()
@@ -75,19 +77,13 @@ fn part2_overengineered(input: &str) -> isize {
 
             let mut e_out_end = 0isize;
 
-            let mut a_code = code.clone();
-            let mut b_code = code.clone();
-            let mut c_code = code.clone();
-            let mut d_code = code.clone();
-            let mut e_code = code.clone();
-
             let output = &mut (e_out, &mut e_out_end);
 
-            let mut a = IntcodeMachine::new(&mut a_code, once(a).chain(once(0).chain(a_in)), a_out);
-            let mut b = IntcodeMachine::new(&mut b_code, once(b).chain(b_in), b_out);
-            let mut c = IntcodeMachine::new(&mut c_code, once(c).chain(c_in), c_out);
-            let mut d = IntcodeMachine::new(&mut d_code, once(d).chain(d_in), d_out);
-            let mut e = IntcodeMachine::new(&mut e_code, once(e).chain(e_in), output);
+            let mut a = IntcodeMachine::new(&code, once(a).chain(once(0).chain(a_in)), a_out);
+            let mut b = IntcodeMachine::new(&code, once(b).chain(b_in), b_out);
+            let mut c = IntcodeMachine::new(&code, once(c).chain(c_in), c_out);
+            let mut d = IntcodeMachine::new(&code, once(d).chain(d_in), d_out);
+            let mut e = IntcodeMachine::new(&code, once(e).chain(e_in), output);
 
             let mut pool = scoped_threadpool::Pool::new(5);
 

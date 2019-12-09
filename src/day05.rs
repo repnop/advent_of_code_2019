@@ -13,10 +13,10 @@ fn parse_input(input: &str) -> Vec<isize> {
 
 #[aoc(day5, part1)]
 fn part1(input: &[isize]) -> isize {
-    let mut bytes = input.to_vec();
+    let bytes = input.to_vec();
     let mut output = 0isize;
 
-    let mut machine = IntcodeMachine::new(&mut bytes, once(1), &mut output);
+    let mut machine = IntcodeMachine::new(&bytes, once(1), &mut output);
     machine.run();
 
     output
@@ -24,10 +24,10 @@ fn part1(input: &[isize]) -> isize {
 
 #[aoc(day5, part2)]
 fn part2(input: &[isize]) -> isize {
-    let mut bytes = input.to_vec();
+    let bytes = input.to_vec();
     let mut output = 0isize;
 
-    let mut machine = IntcodeMachine::new(&mut bytes, once(5), &mut output);
+    let mut machine = IntcodeMachine::new(&bytes, once(5), &mut output);
     machine.run();
 
     output

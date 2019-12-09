@@ -27,15 +27,18 @@ fn part1(input: &str) -> usize {
     };
 
     let (ones, twos) =
-        layer.chars().filter(|&c| c == '1' || c == '2').fold((0, 0), |(mut o, mut t), c| {
-            if c == '1' {
-                o += 1;
-            } else {
-                t += 1;
-            }
+        layer
+            .chars()
+            .filter(|&c| c == '1' || c == '2')
+            .fold((0, 0), |(mut o, mut t), c| {
+                if c == '1' {
+                    o += 1;
+                } else {
+                    t += 1;
+                }
 
-            (o, t)
-        });
+                (o, t)
+            });
 
     ones * twos
 }
@@ -86,9 +89,4 @@ fn part2(input: &str) -> String {
     }
 
     output_string
-}
-
-#[test]
-fn bar() {
-    println!("{}", part2(include_str!("../input/2019/day8.txt").trim()));
 }
