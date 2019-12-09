@@ -9,21 +9,13 @@ pub struct IntcodeMachine<'a, R: Iterator<Item = isize>, W: Sink<isize>> {
 
 impl<'a, R: Iterator<Item = isize>, W: Sink<isize>> IntcodeMachine<'a, R, W> {
     pub fn new(data: &'a mut [isize], input: R, output: W) -> Self {
-        Self {
-            data,
-            ip: 0,
-            input,
-            output,
-        }
+        Self { data, ip: 0, input, output }
     }
 
     pub fn run(&mut self) {
         loop {
             let (inst, offset) = Instructions::decode(&self.data[self.ip..]);
             self.ip += offset;
-
-            #[cfg(debug_assertions)]
-            eprintln!("{:?}", inst);
 
             if !inst.execute(self) {
                 break;
@@ -38,6 +30,19 @@ impl<'a, R: Iterator<Item = isize>, W: Sink<isize>> IntcodeMachine<'a, R, W> {
 
 pub trait Sink<Item> {
     fn send(&mut self, item: Item);
+}
+
+impl<U: Clone, T: Sink<U>, V: Sink<U>> Sink<U> for (T, V) {
+    fn send(&mut self, item: U) {
+        self.0.send(item.clone());
+        self.1.send(item);
+    }
+}
+
+impl Sink<isize> for crossbeam_channel::Sender<isize> {
+    fn send(&mut self, item: isize) {
+        crossbeam_channel::Sender::send(&*self, item).unwrap();
+    }
 }
 
 impl Sink<isize> for std::io::Stdout {
@@ -466,12 +471,7 @@ impl From<isize> for Opcode {
         i /= 10;
         let param3 = (i % 10).into();
 
-        Self {
-            opcode,
-            param1,
-            param2,
-            param3,
-        }
+        Self { opcode, param1, param2, param3 }
     }
 }
 
@@ -483,11 +483,8 @@ mod tests {
     #[test]
     fn conditionals() {
         let input = "3,21,1008,21,8,20,1005,20,22,107,8,21,20,1006,20,31,1106,0,36,98,0,0,1002,21,125,20,4,20,1105,1,46,104,999,1105,1,46,1101,1000,1,20,4,20,1105,1,46,98,99";
-        let mut input: Vec<isize> = input
-            .split(',')
-            .map(str::parse)
-            .collect::<Result<_, _>>()
-            .unwrap();
+        let mut input: Vec<isize> =
+            input.split(',').map(str::parse).collect::<Result<_, _>>().unwrap();
 
         let mut output = 0isize;
         let mut machine = IntcodeMachine::new(&mut input, once(7), &mut output);
