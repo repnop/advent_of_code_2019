@@ -11,8 +11,8 @@ name = "programmer"
 path = "src/programmer.rs"
 
 [dependencies]
-aoc-runner = "0.2"
-aoc-runner-derive = "0.2"
+aoc-runner = "0.3"
+aoc-runner-derive = "0.3"
 crossbeam-channel = "0.4"
 enum_dispatch = "0.2"
 itertools = "0.8"

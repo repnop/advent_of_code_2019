@@ -16,15 +16,14 @@ fn main() {
 
     #[rustfmt::skip]
     let input_program = [
-        01101, 0, 0, 0,         // add imm(0), imm(0), pos(0),
-        01101, 0, 0, 2,         // add imm(0), imm(0), pos(2),
-        00109, 99,              // arel imm(99)
-        00003, 90,              // input pos(90)
-        00109, 1,               // arel imm(1)
-        20101, 0, 90, 0,        // add imm(0), pos(90), rel(0)
-        01007, 90, 99999, 92,   // lt pos(90), imm(99999), pos(92)
-        01006, 92, 0,           // jif pos(92), imm(0)
-        01005, 92, 514,         // jit pos(92), imm(522)
+        01101, 0, 0, 0,             // add imm(0), imm(0), pos(0),
+        01101, 0, 0, 2,             // add imm(0), imm(0), pos(2),
+        00003, 1000,                // input pos(1000)
+        20101, 0, 1000, 0,          // add imm(0), pos(1000), rel(0)
+        00109, 1,                   // arel imm(1)
+        01007, 1000, 99999, 1001,   // lt pos(90), imm(99999), pos(1001)
+        01006, 1001, 0,             // jif pos(1001), imm(0)
+        01005, 1001, 520,           // jit pos(1001), imm(520)
     ];
 
     program[512..(512 + input_program.len())].copy_from_slice(&input_program);

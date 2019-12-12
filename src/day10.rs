@@ -1,6 +1,5 @@
 use aoc_runner_derive::{aoc, aoc_generator};
 use rayon::prelude::*;
-use std::collections::HashSet;
 
 #[derive(PartialEq, Clone, Copy, Debug)]
 struct Answer((usize, usize), usize);
@@ -44,11 +43,7 @@ struct Field {
 
 impl Field {
     fn new(tiles: Vec<Tile>, width: usize, height: usize) -> Self {
-        Self {
-            tiles,
-            width,
-            height,
-        }
+        Self { tiles, width, height }
     }
 
     fn at(&self, x: usize, y: usize) -> Tile {
@@ -58,9 +53,7 @@ impl Field {
     fn asteroid_points<'a>(&'a self) -> impl Iterator<Item = (usize, usize)> + 'a {
         let points = (0..self.width).map(move |x| (0..self.height).map(move |y| (x, y)));
 
-        points
-            .flatten()
-            .filter(move |(x, y)| self.at(*x, *y).is_asteroid())
+        points.flatten().filter(move |(x, y)| self.at(*x, *y).is_asteroid())
     }
 }
 
@@ -97,10 +90,8 @@ fn gen(input: &str) -> Field {
 
 #[aoc(day10, part1)]
 fn part1(field: &Field) -> Answer {
-    let coords: Vec<_> = (0..field.width)
-        .map(move |x| (0..field.height).map(move |y| (x, y)))
-        .flatten()
-        .collect();
+    let coords: Vec<_> =
+        (0..field.width).map(move |x| (0..field.height).map(move |y| (x, y))).flatten().collect();
 
     coords
         .into_par_iter()
@@ -255,8 +246,5 @@ fn part1_tests() {
 
 #[cfg(test)]
 fn test_input(input: &str, expected: (usize, usize, usize)) {
-    assert_eq!(
-        part1(&gen(input)),
-        Answer((expected.0, expected.1), expected.2)
-    );
+    assert_eq!(part1(&gen(input)), Answer((expected.0, expected.1), expected.2));
 }

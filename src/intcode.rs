@@ -1,5 +1,12 @@
 use enum_dispatch::enum_dispatch;
 
+macro_rules! debug {
+    ($($ts:tt)*) => {{
+        #[cfg(debug_assertions)]
+        eprintln!($($ts)*);
+    }}
+}
+
 pub struct IntcodeMachine<R: Iterator<Item = isize>, W: Sink<isize>> {
     data: Vec<isize>,
     ip: usize,
@@ -14,21 +21,16 @@ impl<R: Iterator<Item = isize>, W: Sink<isize>> IntcodeMachine<R, W> {
         let mut data = vec![0; 4096];
         data[..program.len()].copy_from_slice(&program);
 
-        Self {
-            data,
-            ip: 0,
-            relative_base: 0,
-            input,
-            output,
-            running: true,
-        }
+        Self { data, ip: 0, relative_base: 0, input, output, running: true }
     }
 
     pub fn run(&mut self) {
         while self.running {
-            let inst = Instructions::decode(&self.data[self.ip..]);
-            // #[cfg(debug_assertions)]
-            // eprintln!("{:?}", inst);
+            let inst = Instructions::decode(
+                &self.data[self.ip..],
+                #[cfg(debug_assertions)]
+                self.ip,
+            );
             self.ip += inst.size();
             inst.execute(self);
         }
@@ -176,6 +178,8 @@ impl Instruction for Add {
         let op2 = self.op2.resolve(&machine);
         let dst = self.dst.resolve(&machine);
 
+        debug!("Add: memory[{}] = {} + {}", dst, op1, op2);
+
         machine.data[dst] = op1 + op2;
     }
 
@@ -214,6 +218,8 @@ impl Instruction for Mul {
         let op2 = self.op2.resolve(&machine);
         let dst = self.dst.resolve(&machine);
 
+        debug!("Mul: memory[{}] = {} * {}", dst, op1, op2);
+
         machine.data[dst] = op1 * op2;
     }
 
@@ -222,12 +228,12 @@ impl Instruction for Mul {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Halt;
 
 impl Halt {
     pub fn new() -> Self {
-        Self
+        Self::default()
     }
 }
 
@@ -269,6 +275,8 @@ impl Instruction for Input {
         let inp = machine.input.next().unwrap();
         let dst = self.operand.resolve(&machine);
 
+        debug!("Input: memory[{}] = {}", dst, inp);
+
         machine.data[dst] = inp;
     }
 
@@ -300,6 +308,8 @@ impl Instruction for Output {
         machine: &mut IntcodeMachine<R, W>,
     ) {
         let val = self.operand.resolve(&machine);
+
+        debug!("Output: sending {}", val);
 
         machine.output.send(val);
     }
@@ -334,7 +344,9 @@ impl Instruction for JumpIfTrue {
         machine: &mut IntcodeMachine<R, W>,
     ) {
         if self.test.resolve(&machine) != 0 {
-            machine.ip = self.jump_to.resolve(&machine) as usize;
+            let jump_to = self.jump_to.resolve(&machine) as usize;
+            debug!("JumpIfTrue: ip = {}", jump_to);
+            machine.ip = jump_to;
         }
     }
 
@@ -368,7 +380,9 @@ impl Instruction for JumpIfFalse {
         machine: &mut IntcodeMachine<R, W>,
     ) {
         if self.test.resolve(&machine) == 0 {
-            machine.ip = self.jump_to.resolve(&machine) as usize;
+            let jump_to = self.jump_to.resolve(&machine) as usize;
+            debug!("JumpIfTrue: ip = {}", jump_to);
+            machine.ip = jump_to;
         }
     }
 
@@ -404,10 +418,14 @@ impl Instruction for LessThan {
         machine: &mut IntcodeMachine<R, W>,
     ) {
         let dst = self.dst.resolve(&machine);
+        let op1 = self.op1.resolve(&machine);
+        let op2 = self.op2.resolve(&machine);
 
-        if self.op1.resolve(&machine) < self.op2.resolve(&machine) {
+        if op1 < op2 {
+            debug!("LessThan: memory[{}] = 1 ({} < {})", dst, op1, op2);
             machine.data[dst] = 1;
         } else {
+            debug!("LessThan: memory[{}] = 0 ({} >= {})", dst, op1, op2);
             machine.data[dst] = 0;
         }
     }
@@ -444,10 +462,14 @@ impl Instruction for EqualTo {
         machine: &mut IntcodeMachine<R, W>,
     ) {
         let dst = self.dst.resolve(&machine);
+        let op1 = self.op1.resolve(&machine);
+        let op2 = self.op2.resolve(&machine);
 
-        if self.op1.resolve(&machine) == self.op2.resolve(&machine) {
+        if op1 == op2 {
+            debug!("EqualTo: memory[{}] = 1 ({} == {})", dst, op1, op2);
             machine.data[dst] = 1;
         } else {
+            debug!("EqualTo: memory[{}] = 0 ({} != {})", dst, op1, op2);
             machine.data[dst] = 0;
         }
     }
@@ -480,6 +502,8 @@ impl Instruction for ModRelBase {
         machine: &mut IntcodeMachine<R, W>,
     ) {
         let value = self.operand.resolve(&machine);
+
+        debug!("ModRelBase: relative_base = {} (value: {})", machine.relative_base + value, value);
 
         machine.relative_base += value;
     }
@@ -515,7 +539,7 @@ pub enum Instructions {
 }
 
 impl Instructions {
-    pub fn decode(ints: &[isize]) -> Self {
+    pub fn decode(ints: &[isize], #[cfg(debug_assertions)] ip: usize) -> Self {
         const ADD_OP: usize = 1;
         const MUL_OP: usize = 2;
         const INP_OP: usize = 3;
@@ -542,8 +566,12 @@ impl Instructions {
             EQU_OP => EqualTo::decode(opcode, bytes),
             MRB_OP => ModRelBase::decode(opcode, bytes),
             HALT_OP => Halt::new().into(),
+            #[cfg(debug_assertions)]
             #[cold]
-            n => panic!("Invalid opcode: {}, {}", n, ints[0]),
+            n => panic!("Invalid opcode: {}, ip: {}", n, ip),
+            #[cfg(not(debug_assertions))]
+            #[cold]
+            n => panic!("Invalid opcode: {}", n),
         }
     }
 }
@@ -586,12 +614,7 @@ impl From<isize> for Opcode {
         i /= 10;
         let param3 = (i % 10).into();
 
-        Self {
-            opcode,
-            param1,
-            param2,
-            param3,
-        }
+        Self { opcode, param1, param2, param3 }
     }
 }
 
@@ -601,11 +624,7 @@ mod tests {
     use std::iter::once;
 
     fn parse_input(input: &str) -> Vec<isize> {
-        input
-            .split(',')
-            .map(str::parse)
-            .collect::<Result<_, _>>()
-            .unwrap()
+        input.split(',').map(str::parse).collect::<Result<_, _>>().unwrap()
     }
 
     #[test]
