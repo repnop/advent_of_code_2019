@@ -7,6 +7,10 @@ macro_rules! debug {
     }}
 }
 
+pub fn empty() -> impl Iterator<Item = isize> {
+    None.into_iter()
+}
+
 pub struct IntcodeMachine<R: Iterator<Item = isize>, W: Sink<isize>> {
     data: Vec<isize>,
     ip: usize,
